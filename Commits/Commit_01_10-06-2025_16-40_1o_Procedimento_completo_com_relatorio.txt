@@ -1,0 +1,15 @@
+01o commit – 10-junho-2015 às 16-40-00 — Projeto CadastroSocketServerClient_MP_N5_M3
+
+Inclui:
+
+- Projeto CadastroServer (servidor baseado em Socket + Threads + JPA)
+- Projeto CadastroClient (cliente console baseado em Socket)
+- Modelo de entidades JPA (Produto, Usuario, Movimento, Pessoa, PessoaFisica, PessoaJuridica)
+- Controllers JPA (MovimentoJpaController, PessoaJpaController, ProdutoJpaController, UsuarioJpaController)
+- Implementação de comunicação cliente/servidor com autenticação e comando "L"
+- Relatório da prática: Relatorio_1o_Procedimento_Missao_Pratica_N5_M3 (.pdf, .odt)
+- Checklist de envio: Mini_Checklist_Envio_Missao_Pratica_N5_M3.txt
+- README.md com documentação do projeto
+
+Missão Prática | Nível 5 | Mundo 3 — Disciplina Nível 5: Por que não paralelizar? (RPG0018)
+Universidade Estácio de Sá — 2025.1 — Aluno: Ivan de Ávila Carvalho Fleury Mortimer

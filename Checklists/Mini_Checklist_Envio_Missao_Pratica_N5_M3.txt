@@ -1,0 +1,22 @@
+
+Mini Checklist de Envio — 1º Procedimento | Missão Prática | Nível 5 | Mundo 3
+
+1. Projeto
+[✓] O código final de CadastroServer e CadastroClient está salvo e testado.
+[✓] O CadastroClientMain gera no console exatamente a saída esperada da missão prática.
+
+2. Relatório
+[✓] O relatório foi confeccionado em formato .odt (no LibreOffice).
+[✓] Todos os campos obrigatórios do relatório foram preenchidos.
+[✓] O texto foi revisado quanto a ortografia e formatação.
+[✓] Caixas de código com fundo colorido foram aplicadas nos blocos de código.
+
+3. GitHub
+[✓] O repositório GitHub foi criado, o link foi colocado no relatório: <https://github.com/ivanmortimer/CadastroSocketServerClient_MP_N5_M3>.
+
+4. Exportação
+[✓] O relatório foi exportado como PDF a partir do LibreOffice.
+[✓] O PDF final foi revisado visualmente para conferir se tudo está correto.
+
+5. Envio
+[✓] O PDF está pronto para envio na plataforma.
