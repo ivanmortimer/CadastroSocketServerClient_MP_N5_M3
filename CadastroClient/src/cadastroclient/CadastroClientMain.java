@@ -4,12 +4,11 @@
  */
 package cadastroclient;
 
-import model.Produto;
-
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.List;
+import model.Produto;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,41 +29,36 @@ public class CadastroClientMain {
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
         ) {
-            // Se chegamos aqui, a conexão com o servidor na porta 4321 foi estabelecida,
-            // e os canais de entrada e saída foram abertos com sucesso.
-            
-            // (1) Enviar login e senha
+            // Enviar login e senha
             String login = "op1";
             String senha = "op1";
             out.writeObject(login);
             out.writeObject(senha);
             out.flush();
-            
-            // (2) Ler resposta de login (agora é uma String enviada pelo servidor)
-            //     Se chegamos aqui, usuário foi autenticado com sucesso
+
+            // Ler resposta do servidor
             String respostaLogin = (String) in.readObject();
             System.out.println(respostaLogin);
 
-            // (3) Enviar comando "L"
-            String comando = "L";
-            out.writeObject(comando);
+            // Enviar comando "L" (Listar produtos)
+            out.writeObject("L");
             out.flush();
 
-            // (4) Receber resposta
-            Object resposta = in.readObject();
-            if (resposta instanceof List) {
-                List<Produto> produtos = (List<Produto>) resposta;
+            // Ler "Lista de produtos:"
+            String msg = (String) in.readObject();
+            System.out.println(msg);
 
-                // (5) Exibir nomes dos produtos
-                for (Produto p : produtos) {
-                    System.out.println(p.getNome());
-                }
-            } else if (resposta instanceof String) {
-                // Se for uma String, exibir mensagem
-                System.out.println((String) resposta);
-            } else {
-                System.out.println("Resposta inesperada do servidor.");
+            // Ler a lista de produtos
+            List<Produto> produtos = (List<Produto>) in.readObject();
+            for (Produto p : produtos) {
+                System.out.println("Produto: " + p.getNome() + " (ID: " + p.getIdProduto() + ") | Quantidade: " + p.getQuantidade());
             }
+
+            // Encerrar (enviar "X")
+            out.writeObject("X");
+            out.flush();
+
+            System.out.println("Cliente encerrado com sucesso.");
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Erro no cliente", e);

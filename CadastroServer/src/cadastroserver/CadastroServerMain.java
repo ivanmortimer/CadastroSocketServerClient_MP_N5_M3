@@ -13,17 +13,10 @@ import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author Ivan
- */
 public class CadastroServerMain {
 
     private static final Logger LOGGER = Logger.getLogger(CadastroServerMain.class.getName());
 
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String[] args) {
         try {
             // (1) Instanciar EntityManagerFactory
@@ -36,24 +29,27 @@ public class CadastroServerMain {
             PessoaJpaController ctrlPessoa = new PessoaJpaController(emf);
 
             // (3) Criar o ServerSocket na porta 4321
-            ServerSocket serverSocket = new ServerSocket(4321);
-            LOGGER.info("CadastroServer iniciado na porta 4321.");
+            try (ServerSocket serverSocket = new ServerSocket(4321)) {
+                LOGGER.info("CadastroServer iniciado na porta 4321.");
 
-            // (4) Loop infinito de atendimento
-            while (true) {
-                Socket clientSocket = serverSocket.accept();
-                LOGGER.log(Level.INFO, "Cliente conectado: {0}", clientSocket.getInetAddress().getHostAddress());
+                // (4) Loop infinito de atendimento
+                while (true) {
+                    Socket clientSocket = serverSocket.accept();
+                    LOGGER.log(Level.INFO, "Cliente conectado: {0}", clientSocket.getInetAddress().getHostAddress());
 
-                // Usar a nova Thread V2
-                CadastroThreadV2 thread = new CadastroThreadV2(
-                        ctrlProduto, ctrlUsuario, ctrlMovimento, ctrlPessoa, clientSocket
-                );
+                    // Usar a nova Thread V2
+                    CadastroThreadV2 thread = new CadastroThreadV2(
+                            ctrlProduto, ctrlUsuario, ctrlMovimento, ctrlPessoa, clientSocket
+                    );
 
-                thread.start();
+                    thread.start();
+                }
             }
 
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Erro no servidor", e);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Erro inesperado no servidor", e);
         }
     }
 }

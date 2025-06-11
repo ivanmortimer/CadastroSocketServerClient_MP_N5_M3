@@ -4,24 +4,26 @@
  */
 package cadastroclient;
 
+import java.awt.Window;
+import java.io.EOFException;
+import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.net.SocketException;
 import java.util.List;
-import javax.swing.JTextArea;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
+import model.Produto;
 
-/**
- *
- * @author Ivan
- */
 public class ThreadClient extends Thread {
 
+    private static final Logger LOGGER = Logger.getLogger(ThreadClient.class.getName());
+
     private final ObjectInputStream in;
-    private final JTextArea texto;
     private final SaidaFrame frame;
 
-    public ThreadClient(ObjectInputStream in, JTextArea texto, SaidaFrame frame) {
+    public ThreadClient(ObjectInputStream in, SaidaFrame frame) {
         this.in = in;
-        this.texto = texto;
         this.frame = frame;
     }
 
@@ -31,41 +33,49 @@ public class ThreadClient extends Thread {
             while (true) {
                 Object obj = in.readObject();
 
-                if (obj instanceof String) {
-                    String msg = (String) obj;
+                if (obj instanceof String msg) {
 
-                    // Trazer a janela para frente quando listar produtos ou ao receber uma mensagem
-                    SwingUtilities.invokeLater(() -> {
-                        frame.setVisible(true);
-                        frame.toFront();
-                        frame.requestFocus();
-                    });
-
-                    // Se for "Lista de produtos:", incluir espaçamento
-                    if (msg.equalsIgnoreCase("Lista de produtos:")) {
-                        SwingUtilities.invokeLater(() -> texto.append("\nLista de produtos:\n"));
-                    } else {
-                        SwingUtilities.invokeLater(() -> texto.append(msg + "\n"));
+                    // Se for mensagem de Lista de produtos → limpar texto antes e trazer frame para frente
+                    if (msg.startsWith("Lista de produtos:")) {
+                        SwingUtilities.invokeLater(() -> {
+                            frame.getTexto().setText("");
+                            bringFrameToFront(frame);
+                        });
                     }
-                } else if (obj instanceof List) {
-                    List<?> lista = (List<?>) obj;
 
-                    SwingUtilities.invokeLater(() -> {
-                        for (Object item : lista) {
-                            if (item instanceof model.Produto produto) {
-                                texto.append("Id: " + produto.getIdProduto()
-                                        + " | Produto: " + produto.getNome()
-                                        + " | Quantidade: " + produto.getQuantidade() + "\n");
-                            } else {
-                                texto.append(item.toString() + "\n");
-                            }
+                    SwingUtilities.invokeLater(() -> frame.getTexto().append(msg + "\n"));
+
+                } else if (obj instanceof List<?> lista) {
+
+                    // Supondo que seja lista de Produto
+                    for (Object o : lista) {
+                        if (o instanceof Produto p) {
+                            String linha = String.format(
+                                    "Produto: %s (ID: %d) | Quantidade: %d",
+                                    p.getNome(), p.getIdProduto(), p.getQuantidade());
+                            SwingUtilities.invokeLater(() -> frame.getTexto().append(linha + "\n"));
                         }
-                        texto.append("\n"); // espaçamento entre listagens
-                    });
+                    }
+
+                    // Espaço em branco entre listagens
+                    SwingUtilities.invokeLater(() -> frame.getTexto().append("\n"));
                 }
             }
-        } catch (Exception e) {
-            SwingUtilities.invokeLater(() -> texto.append("Conexão encerrada.\n"));
+        } catch (SocketException e) {
+            LOGGER.log(Level.INFO, "Conexão encerrada.");
+        } catch (EOFException e) {
+            LOGGER.log(Level.INFO, "Conexão encerrada pelo servidor.");
+        } catch (IOException | ClassNotFoundException e) {
+            LOGGER.log(Level.SEVERE, "Erro na ThreadClient", e);
         }
+    }
+
+    // Método helper para trazer a janela para frente de forma segura
+    private void bringFrameToFront(Window window) {
+        window.setVisible(true);
+        window.setAlwaysOnTop(true);
+        window.toFront();
+        window.requestFocus();
+        window.setAlwaysOnTop(false); // Remove always on top para não "grudar" no topo da tela
     }
 }

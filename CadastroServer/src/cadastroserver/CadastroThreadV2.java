@@ -16,15 +16,12 @@ import java.net.Socket;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.persistence.RollbackException;
 import model.Movimento;
 import model.Pessoa;
 import model.Produto;
 import model.Usuario;
 
-/**
- *
- * @author Ivan
- */
 public class CadastroThreadV2 extends Thread {
 
     private static final Logger LOGGER = Logger.getLogger(CadastroThreadV2.class.getName());
@@ -52,9 +49,9 @@ public class CadastroThreadV2 extends Thread {
     @Override
     public void run() {
         try (
-                ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-                ObjectInputStream in = new ObjectInputStream(socket.getInputStream());) {
-
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+        ) {
             // (1) Ler login e senha
             String login = (String) in.readObject();
             String senha = (String) in.readObject();
@@ -78,20 +75,30 @@ public class CadastroThreadV2 extends Thread {
                 if (comando.equalsIgnoreCase("L")) {
                     // Listar produtos
                     List<Produto> produtos = ctrlProd.findProdutoEntities();
-                    // out.writeObject("Lista de produtos:");
+                    out.writeObject("Lista de produtos:");
                     out.writeObject(produtos);
                     out.flush();
+
                 } else if (comando.equalsIgnoreCase("E") || comando.equalsIgnoreCase("S")) {
                     // Processar entrada ou saída
                     processarMovimento(comando, usuario, in, out);
+
                 } else if (comando.equalsIgnoreCase("X")) {
-                    // Encerrar
-                    out.writeObject("Conexão encerrada.");
-                    out.flush();
-                    break;
+                    try {
+                        // Encerrar
+                        out.writeObject("Conexão encerrada.");
+                        out.flush();
+                    } catch (IOException e) {
+                        LOGGER.log(Level.WARNING, "Erro ao enviar mensagem de encerramento para o cliente.", e);
+                    }
+                    break; // encerra a thread
                 }
             }
 
+        } catch (IOException e) {
+            LOGGER.log(Level.INFO, "Conexão encerrada com o cliente (IO Exception).");
+        } catch (ClassNotFoundException e) {
+            LOGGER.log(Level.SEVERE, "Erro de serialização/deserialização", e);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Erro na thread", e);
         }
@@ -127,20 +134,20 @@ public class CadastroThreadV2 extends Thread {
             // (3) Criar Movimento
             Movimento mov = new Movimento();
             mov.setIdUsuario(usuario);
-            mov.setTipo(tipo.charAt(0)); // CORREÇÃO AQUI
+            mov.setTipo(Character.toUpperCase(tipo.charAt(0)));  // ajuste correto do "case" da letra (que pode ser "e" ou "s") para maiúscula
             mov.setIdPessoa(pessoa);
             mov.setIdProduto(produto);
             mov.setQuantidade(quantidade);
-            mov.setValorUnitario(new BigDecimal(Float.toString(valorUnitario))); // CORREÇÃO AQUI
+            mov.setValorUnitario(new BigDecimal(Float.toString(valorUnitario)));
 
             ctrlMov.create(mov);
 
             // (4) Atualizar quantidade de produto
             int novaQuantidade = produto.getQuantidade();
 
-            if (tipo.equals("E")) {
+            if (tipo.equalsIgnoreCase("E")) {
                 novaQuantidade += quantidade;
-            } else if (tipo.equals("S")) {
+            } else if (tipo.equalsIgnoreCase("S")) {
                 novaQuantidade -= quantidade;
             }
 
@@ -148,9 +155,17 @@ public class CadastroThreadV2 extends Thread {
             ctrlProd.edit(produto);
 
             // (5) Responder sucesso
-            out.writeObject("Movimento de tipo " + tipo + " registrado com sucesso.");
+            out.writeObject("Movimento de tipo " + tipo.toUpperCase() + " registrado com sucesso.");
             out.flush();
 
+        } catch (RollbackException e) {
+            LOGGER.log(Level.SEVERE, "Erro de banco (provavelmente trigger)", e);
+            try {
+                out.writeObject("Erro ao processar movimento: " + e.getCause().getMessage());
+                out.flush();
+            } catch (IOException ex) {
+                LOGGER.log(Level.SEVERE, "Erro ao enviar mensagem de erro", ex);
+            }
         } catch (IOException | ClassNotFoundException | NumberFormatException e) {
             LOGGER.log(Level.SEVERE, "Erro ao processar movimento", e);
             try {

@@ -13,17 +13,10 @@ import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author Ivan
- */
 public class CadastroClientV2Main {
 
     private static final Logger LOGGER = Logger.getLogger(CadastroClientV2Main.class.getName());
 
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String[] args) {
         try (
             Socket socket = new Socket("localhost", 4321);
@@ -45,7 +38,7 @@ public class CadastroClientV2Main {
             // Criar a janela de saída
             SaidaFrame frame = new SaidaFrame();
 
-            // Iniciar a ThreadClient para receber mensagens de forma assíncrona
+            // Iniciar a ThreadClient com SaidaFrame
             ThreadClient threadClient = new ThreadClient(in, frame);
             threadClient.start();
 
@@ -66,7 +59,7 @@ public class CadastroClientV2Main {
                 // Validar comando
                 if (!(comando.equals("L") || comando.equals("E") || comando.equals("S") || comando.equals("X"))) {
                     System.out.println("Opção inválida. As opções válidas são: L (Listar), E (Entrada), S (Saída), X (Finalizar).");
-                    continue; // volta ao menu
+                    continue;
                 }
 
                 // Enviar comando
@@ -76,28 +69,23 @@ public class CadastroClientV2Main {
                 if (comando.equals("E") || comando.equals("S")) {
                     // Entrada ou saída → ler dados e enviar
 
-                    // Id da pessoa
                     Integer idPessoa = lerInteiroPositivo("Digite o Id da Pessoa: ", teclado);
                     out.writeObject(idPessoa.toString());
                     out.flush();
 
-                    // Id do produto
                     Integer idProduto = lerInteiroPositivo("Digite o Id do Produto: ", teclado);
                     out.writeObject(idProduto.toString());
                     out.flush();
 
-                    // Quantidade
                     Integer quantidade = lerInteiroPositivo("Digite a quantidade: ", teclado);
                     out.writeObject(quantidade.toString());
                     out.flush();
 
-                    // Valor unitário
                     Float valorUnitario = lerFloatPositivo("Digite o valor unitario (use ponto ou vírgula): ", teclado);
                     out.writeObject(valorUnitario.toString());
                     out.flush();
                 }
-
-                // No caso do "L" e do "X", já enviamos o comando → a ThreadClient cuida da resposta
+                // No caso de "L" e "X", a ThreadClient cuida da resposta
             }
 
             System.out.println("Cliente encerrado.");
@@ -107,7 +95,7 @@ public class CadastroClientV2Main {
         }
     }
 
-    // NOVO → método auxiliar para validar inteiro positivo
+    // Método auxiliar para ler inteiro positivo
     private static Integer lerInteiroPositivo(String prompt, BufferedReader teclado) {
         while (true) {
             try {
@@ -119,13 +107,13 @@ public class CadastroClientV2Main {
                 } else {
                     return valor;
                 }
-            } catch (Exception e) {
+            } catch (IOException | NumberFormatException e) {
                 System.out.println("Valor inválido. Digite um número inteiro positivo.");
             }
         }
     }
 
-    // NOVO → método auxiliar para validar float positivo
+    // Método auxiliar para ler float positivo
     private static Float lerFloatPositivo(String prompt, BufferedReader teclado) {
         while (true) {
             try {
