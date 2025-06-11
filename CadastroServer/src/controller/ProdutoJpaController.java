@@ -4,13 +4,11 @@
  */
 package controller;
 
-import controller.exceptions.NonexistentEntityException;
 import model.Produto;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
-import javax.persistence.EntityNotFoundException;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import java.io.Serializable;
@@ -41,40 +39,16 @@ public class ProdutoJpaController implements Serializable {
             em.persist(produto);
             em.getTransaction().commit();
         } finally {
-            em.close();
+            if (em != null) {
+                em.close();
+            }
         }
     }
 
-    public void edit(Produto produto) throws NonexistentEntityException, Exception {
+    public Produto findProduto(Integer id) {
         EntityManager em = getEntityManager();
         try {
-            em.getTransaction().begin();
-            produto = em.merge(produto);
-            em.getTransaction().commit();
-        } catch (Exception ex) {
-            Integer id = produto.getIdProduto();
-            if (findProduto(id) == null) {
-                throw new NonexistentEntityException("The produto with id " + id + " no longer exists.");
-            }
-            throw ex;
-        } finally {
-            em.close();
-        }
-    }
-
-    public void destroy(Integer id) throws NonexistentEntityException {
-        EntityManager em = getEntityManager();
-        try {
-            em.getTransaction().begin();
-            Produto produto;
-            try {
-                produto = em.getReference(Produto.class, id);
-                produto.getIdProduto();
-            } catch (EntityNotFoundException enfe) {
-                throw new NonexistentEntityException("The produto with id " + id + " no longer exists.", enfe);
-            }
-            em.remove(produto);
-            em.getTransaction().commit();
+            return em.find(Produto.class, id);
         } finally {
             em.close();
         }
@@ -88,6 +62,7 @@ public class ProdutoJpaController implements Serializable {
         return findProdutoEntities(false, maxResults, firstResult);
     }
 
+    @SuppressWarnings("unchecked")
     private List<Produto> findProdutoEntities(boolean all, int maxResults, int firstResult) {
         EntityManager em = getEntityManager();
         try {
@@ -99,15 +74,6 @@ public class ProdutoJpaController implements Serializable {
                 q.setFirstResult(firstResult);
             }
             return q.getResultList();
-        } finally {
-            em.close();
-        }
-    }
-
-    public Produto findProduto(Integer id) {
-        EntityManager em = getEntityManager();
-        try {
-            return em.find(Produto.class, id);
         } finally {
             em.close();
         }
@@ -125,4 +91,19 @@ public class ProdutoJpaController implements Serializable {
             em.close();
         }
     }
+
+    // ====== Método edit() adicionado manualmente ======
+    public void edit(Produto produto) {
+        EntityManager em = getEntityManager();
+        try {
+            em.getTransaction().begin();
+            em.merge(produto);
+            em.getTransaction().commit();
+        } finally {
+            if (em != null) {
+                em.close();
+            }
+        }
+    }
+    // ==================================================
 }

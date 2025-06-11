@@ -4,10 +4,8 @@
  */
 package cadastroserver;
 
-import controller.ProdutoJpaController;
-import controller.UsuarioJpaController;
+import controller.*;
 import java.io.IOException;
-
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import java.net.ServerSocket;
@@ -34,6 +32,8 @@ public class CadastroServerMain {
             // (2) Instanciar os controllers
             ProdutoJpaController ctrlProduto = new ProdutoJpaController(emf);
             UsuarioJpaController ctrlUsuario = new UsuarioJpaController(emf);
+            MovimentoJpaController ctrlMovimento = new MovimentoJpaController(emf);
+            PessoaJpaController ctrlPessoa = new PessoaJpaController(emf);
 
             // (3) Criar o ServerSocket na porta 4321
             ServerSocket serverSocket = new ServerSocket(4321);
@@ -41,12 +41,14 @@ public class CadastroServerMain {
 
             // (4) Loop infinito de atendimento
             while (true) {
-                // Esperar conexão de cliente
                 Socket clientSocket = serverSocket.accept();
                 LOGGER.log(Level.INFO, "Cliente conectado: {0}", clientSocket.getInetAddress().getHostAddress());
 
-                // Instanciar thread para atendimento do cliente
-                CadastroThread thread = new CadastroThread(ctrlProduto, ctrlUsuario, clientSocket);
+                // Usar a nova Thread V2
+                CadastroThreadV2 thread = new CadastroThreadV2(
+                        ctrlProduto, ctrlUsuario, ctrlMovimento, ctrlPessoa, clientSocket
+                );
+
                 thread.start();
             }
 

@@ -30,32 +30,42 @@ public class CadastroClientMain {
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
         ) {
+            // Se chegamos aqui, a conexão com o servidor na porta 4321 foi estabelecida,
+            // e os canais de entrada e saída foram abertos com sucesso.
             
-            // (1) Se chegamos aqui, a conexão com o servidor na porta 4321 foi estabelecida,
-            //     e os canais de entrada e saída foram abertos com sucesso.
-           
-            // (2) Enviar login e senha
+            // (1) Enviar login e senha
             String login = "op1";
             String senha = "op1";
             out.writeObject(login);
             out.writeObject(senha);
             out.flush();
             
-            // (3) Se chegamos aqui, usuário foi autenticado com sucesso
-            System.out.println("Usuario conectado com sucesso");
+            // (2) Ler resposta de login (agora é uma String enviada pelo servidor)
+            //     Se chegamos aqui, usuário foi autenticado com sucesso
+            String respostaLogin = (String) in.readObject();
+            System.out.println(respostaLogin);
 
-            // (4) Enviar comando "L"
+            // (3) Enviar comando "L"
             String comando = "L";
             out.writeObject(comando);
             out.flush();
 
-            // (5) Receber lista de produtos
-            List<Produto> produtos = (List<Produto>) in.readObject();
+            // (4) Receber resposta
+            Object resposta = in.readObject();
+            if (resposta instanceof List) {
+                List<Produto> produtos = (List<Produto>) resposta;
 
-            // (6) Exibir nomes dos produtos
-            for (Produto p : produtos) {
-                System.out.println(p.getNome());
+                // (5) Exibir nomes dos produtos
+                for (Produto p : produtos) {
+                    System.out.println(p.getNome());
+                }
+            } else if (resposta instanceof String) {
+                // Se for uma String, exibir mensagem
+                System.out.println((String) resposta);
+            } else {
+                System.out.println("Resposta inesperada do servidor.");
             }
+
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Erro no cliente", e);
         }
